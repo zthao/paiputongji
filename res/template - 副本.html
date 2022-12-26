@@ -8,7 +8,53 @@
     <link rel="stylesheet" href="res/paipu.css" />
 </head>
 <body>
+    <div class="title">
+        <h1>{% if nickname %}{{ nickname }} 的{% endif %}牌谱统计</h1>
+    </div>
+    <div class="paipu">
+        <hr/>
+        <div><h2>牌谱</h2></div>
+        <div class="date-selector">
+            <span>开始日期 <input id="startdate" type="date"/></span>
+            <span>结束日期 <input id="enddate" type="date"></span>
+            <button type="button" name="submit">确定</button>
+            <button type="button" name="reset">重置</button>
+        </div>
+        <div>
+            <table id="paipu">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>玩家一</th>
+                        <th>玩家二</th>
+                        <th>玩家三</th>
+                        <th>玩家四</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for paipu in data %}
+                        <tr>
+                            <td><span>
+                                <a class="time" href="{{ url + paipu['uuid'] }}" target="_blank">{{ paipu['time'] }}</a>
+                            </span></td>
+                            {% for name, score in paipu['score'].items() %}
+                                <td><span>{{ name }}</span>
+                                {% if score < 0 %}
+                                    <span class="score-hakoshita">{{ score }}</span>
+                                {% else %}
+                                    <span class="score">{{ score }}</span>
+                                {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     <div class="summary">
+        <hr/>
+        <div><h2>统计</h2></div>
         <div>
             <table id="summary">
                 <thead>
@@ -28,7 +74,7 @@
                 <tbody>
                     {% for player in players.values() %}
                         <tr>
-                            <td>{{ '['+player.level+']'+player.name }}</td>
+                            <td>{{ player.name }}</td>
                             <td>{{ player.games }}</td>
                             <td>{{ '%.1f' % player.jingsuan }}</td>
                             <td>{{ player.accum }}</td>

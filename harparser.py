@@ -15,6 +15,7 @@ MAJSOUL_RPCS = {
     '心跳包' : 'heatBeat',
     'OAUTH2登录' : 'oauth2Login',
     '获取牌谱列表' : 'fetchGameRecordList',
+    '获取自定义牌谱列表' : 'fetchCustomizedContestGameRecords',
 }
 
 def majsoul_record_to_paipu(record, account_id : int = None) -> dict:
@@ -23,11 +24,11 @@ def majsoul_record_to_paipu(record, account_id : int = None) -> dict:
         uuid += f'_a{paipu.encrypt_account_id(account_id)}'
     '''
     只统计四名人类玩家的友人场牌局，跳过三麻，AI玩家等
-    GameConfig.category 1=友人场 2=段位场
+    GameConfig.category 1=友人场 2=段位场，4=比赛
     跳过修罗之战，血流换三张，瓦西子麻将等活动模式
     '''
     rule = record.config.mode.detail_rule
-    if (record.config.category == 1 and
+    if (record.config.category == 4 and
         len(record.accounts) == 4 and
         not rule.jiuchao_mode and # 瓦西子麻将
         not rule.muyu_mode and # 龙之目玉
@@ -42,15 +43,24 @@ def majsoul_record_to_paipu(record, account_id : int = None) -> dict:
             'uuid' : uuid,
             'time' : tm.strftime("%Y-%m-%d %H:%M"),
             'score' : {},
+            'jingsuan' : {},
+            'level' : {},
         }
         seats = [None] * 4
         for account in record.accounts:
             seats[account.seat] = account
         for player in record.result.players:
-            # part_point_1字段才是最后得分，total_point不知道是什么，可能是换算后的马点？
+            # part_point_1字段才是最后得分，total_point不知道是什么，可能是换算后的马点？精算点*1000
             score = player.part_point_1
+            jingsuan = player.total_point/1000
             account = seats[player.seat]
             paipu_json['score'][account.nickname] = score
+            paipu_json['jingsuan'][account.nickname] = jingsuan
+            l=['初','士','杰','豪','圣','魂?','魂']
+            #print(account.level.id)
+            #print(account.nickname)
+            #print(int(account.level.id%10000/100)-1)
+            paipu_json['level'][account.nickname] = l[int(account.level.id%10000/100)-1]+str(account.level.id%100)
         return paipu_json
 
 if __name__ == '__main__':
@@ -118,9 +128,10 @@ if __name__ == '__main__':
                         if rpcname == MAJSOUL_RPCS['OAUTH2登录']:
                             account_id = response.account_id
                             nickname = response.account.nickname
-                        elif rpcname == MAJSOUL_RPCS['获取牌谱列表']:
+                        elif rpcname == MAJSOUL_RPCS['获取自定义牌谱列表']:
                             for record in response.record_list:
                                 paipu_json = majsoul_record_to_paipu(record, account_id)
+                                #print(record)
                                 if paipu_json and paipu_json['uuid'] not in uuid_set:
                                     paipu_list.append(paipu_json)
                                     uuid_set.add(paipu_json['uuid'])

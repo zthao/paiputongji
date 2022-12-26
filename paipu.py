@@ -10,9 +10,11 @@ class Player:
     def __init__(self, name):
         self.juni = [0, 0, 0, 0]
         self.accum = 0
+        self.jingsuan = 0
         self.games = 0
         self.hakoshita = 0
         self.name = name
+        self.level = 10000
     
     def juni_ritsu(self, rank):
         if sum(self.juni) == 0:
@@ -32,6 +34,7 @@ def encrypt_account_id(account_id : int):
 def analyze(paipu_list, nickname=None):
     players = {}
     for paipu in paipu_list:
+        #print(paipu)
         scoresum = 0
         rank_order = sorted(paipu['score'].items(), key = lambda t : -t[1])
         for rank, t_name_score in enumerate(rank_order):
@@ -39,25 +42,33 @@ def analyze(paipu_list, nickname=None):
             scoresum += score
             if name not in players:
                 players[name] = Player(name)
+            players[name].level = paipu['level'][name]
             players[name].games += 1
             players[name].juni[rank] += 1
             players[name].accum += score - 25000
             if score < 0:
                 players[name].hakoshita += 1
+        rank_order2 = sorted(paipu['jingsuan'].items(), key = lambda t : -t[1])
+        for rank, t_name_jingsuan in enumerate(rank_order2):
+            name, jingsuan = t_name_jingsuan
+            if name not in players:
+                players[name] = Player(name)
+            players[name].jingsuan += jingsuan
         if scoresum != 100000:
             print(paipu)
             print('!!! sum=%d !!!' % scoresum)
     
-    for player in players.values():
-        print('玩家：%s' % player.name)
-        print('总得失点：%d' % player.accum)
-        print('平均顺位：%.3f' % player.avg_juni())
-        print('一位率: %.2f%%' % (player.juni_ritsu(0) * 100))
-        print("二位率: %.2f%%" % (player.juni_ritsu(1) * 100))
-        print("三位率: %.2f%%" % (player.juni_ritsu(2) * 100))
-        print("四位率: %.2f%%" % (player.juni_ritsu(3) * 100))
-        print("被飞次数：%d" % player.hakoshita)
-        print()
+    #for player in players.values():
+    #    print('玩家：%s' % player.name)
+    #    print('精算：%.1f' % player.jingsuan)
+    #    print('总得失点：%d' % player.accum)
+    #    print('平均顺位：%.3f' % player.avg_juni())
+    #    print('一位率: %.2f%%' % (player.juni_ritsu(0) * 100))
+    #    print("二位率: %.2f%%" % (player.juni_ritsu(1) * 100))
+    #    print("三位率: %.2f%%" % (player.juni_ritsu(2) * 100))
+    #    print("四位率: %.2f%%" % (player.juni_ritsu(3) * 100))
+    #    print("被飞次数：%d" % player.hakoshita)
+    #    print()
 
     dirname = os.path.dirname(__file__)
     env = Environment(loader=FileSystemLoader(os.path.join(dirname, 'res')))
