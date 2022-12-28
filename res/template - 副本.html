@@ -74,7 +74,7 @@
                 <tbody>
                     {% for player in players.values() %}
                         <tr>
-                            <td>{{ player.name }}</td>
+                            <td>{{ '['+player.level+']'+player.name }}</td>
                             <td>{{ player.games }}</td>
                             <td>{{ '%.1f' % player.jingsuan }}</td>
                             <td>{{ player.accum }}</td>
