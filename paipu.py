@@ -32,6 +32,24 @@ def encrypt_account_id(account_id : int):
     return 1358437 + ((7 * account_id + 1117113) ^ 86216345)
 
 def analyze(paipu_list, nickname=None):
+    try:
+        if nickname:
+            with open(nickname+'.json', 'r', encoding='utf-8') as f:
+                paipu_list2 = json.load(f)
+                paipu_list1 = paipu_list
+                paipu_list = []
+                uuid_set = set()
+                #paipu_list.extend(paipu_list2)
+                for paipu_json in paipu_list1:
+                    if paipu_json and paipu_json['uuid'] not in uuid_set:
+                        paipu_list.append(paipu_json)
+                        uuid_set.add(paipu_json['uuid'])
+                for paipu_json in paipu_list2:
+                    if paipu_json and paipu_json['uuid'] not in uuid_set:
+                        paipu_list.append(paipu_json)
+                        uuid_set.add(paipu_json['uuid'])
+    except IOError:
+        print ("No " + nickname + ".json")
     players = {}
     for paipu in paipu_list:
         #print(paipu)
@@ -82,6 +100,10 @@ def analyze(paipu_list, nickname=None):
             url=MAJSOUL_PAIPU_URL,
         ))
         webbrowser.open_new_tab(output_path)
+    
+    with open(nickname+'.json', 'w', encoding='utf-8') as f:
+        json.dump(paipu_list,f,ensure_ascii=False)
+        print("写入文件完成...")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

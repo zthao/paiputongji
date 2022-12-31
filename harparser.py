@@ -13,15 +13,16 @@ from google.protobuf.json_format import MessageToJson
 
 MAJSOUL_RPCS = {
     '心跳包' : 'heatBeat',
-    'OAUTH2登录' : 'oauth2Login',
+    'OAUTH2登录' : 'login',
     '获取牌谱列表' : 'fetchGameRecordList',
     '获取自定义牌谱列表' : 'fetchCustomizedContestGameRecords',
+    '进入比赛场' : 'enterCustomizedContest'
 }
 
 def majsoul_record_to_paipu(record, account_id : int = None) -> dict:
     uuid = record.uuid
-    if account_id:
-        uuid += f'_a{paipu.encrypt_account_id(account_id)}'
+    #if account_id:
+    #    uuid += f'_a{paipu.encrypt_account_id(account_id)}'
     '''
     只统计四名人类玩家的友人场牌局，跳过三麻，AI玩家等
     GameConfig.category 1=友人场 2=段位场，4=比赛
@@ -81,6 +82,7 @@ if __name__ == '__main__':
         uuid_set = set()
         account_id = None
         nickname = None
+        gameid = None
         pb2 = load_protobuf()
         data = json.load(har)
         for entry in data['log']['entries']:
@@ -122,19 +124,24 @@ if __name__ == '__main__':
                         response_descriptor = method_descriptor.output_type
                         response = getattr(pb2, response_descriptor.name)()
                         response.ParseFromString(wrapper.data)
-                        # payload = MessageToJson(response)
-                        # print(rpcname)
-                        # print(payload)
+                        #payload = MessageToJson(response)
+                        #print(rpcname)
+                        #print(payload)
                         if rpcname == MAJSOUL_RPCS['OAUTH2登录']:
                             account_id = response.account_id
                             nickname = response.account.nickname
+                        elif rpcname == MAJSOUL_RPCS['进入比赛场']:
+                            #print(response)
+                            nickname = response.detail_info.contest_name
+                            gameid = response.detail_info.unique_id
                         elif rpcname == MAJSOUL_RPCS['获取自定义牌谱列表']:
                             for record in response.record_list:
-                                paipu_json = majsoul_record_to_paipu(record, account_id)
-                                #print(record)
-                                if paipu_json and paipu_json['uuid'] not in uuid_set:
-                                    paipu_list.append(paipu_json)
-                                    uuid_set.add(paipu_json['uuid'])
+                                if gameid == record.config.meta.contest_uid:
+                                    paipu_json = majsoul_record_to_paipu(record, account_id)
+                                    #print(record)
+                                    if paipu_json and paipu_json['uuid'] not in uuid_set:
+                                        paipu_list.append(paipu_json)
+                                        uuid_set.add(paipu_json['uuid'])
                         # TODO 除了获取牌谱列表外，还有很多功能可供开发
                 break
         if paipu_list:
